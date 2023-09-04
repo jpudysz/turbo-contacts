@@ -6,10 +6,12 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
+    "postinstall": "RCT_NEW_ARCH_ENABLED=1 npx pod-install",
     "start": "react-native start",
     "test": "jest"
   },
   "dependencies": {
+    "TurboContacts": "./turbo-contacts",
     "react": "18.2.0",
     "react-native": "0.72.4"
   },

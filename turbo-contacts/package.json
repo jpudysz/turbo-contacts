@@ -1,0 +1,13 @@
+{
+  "name": "TurboContacts",
+  "version": "1.0.0",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "codegenConfig": {
+    "name": "TurboContactsSpec",
+    "type": "all",
+    "jsSrcsDir": "spec"
+  }
+}
