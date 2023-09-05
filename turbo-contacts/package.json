@@ -8,6 +8,9 @@
   "codegenConfig": {
     "name": "TurboContactsSpec",
     "type": "all",
-    "jsSrcsDir": "spec"
+    "jsSrcsDir": "spec",
+    "android": {
+      "javaPackageName": "com.turbocontacts"
+    }
   }
 }
