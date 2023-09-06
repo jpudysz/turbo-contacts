@@ -12,7 +12,7 @@ import com.facebook.react.modules.core.PermissionAwareActivity
 import com.facebook.react.modules.core.PermissionListener
 import com.turbocontacts.NativeTurboContactsSpec
 
-abstract class TurboContactsModule(reactContext: ReactApplicationContext) : NativeTurboContactsSpec(reactContext), PermissionListener {
+class TurboContactsModule(reactContext: ReactApplicationContext) : NativeTurboContactsSpec(reactContext), PermissionListener {
     private var promise: Promise? = null
     private val requestCode: Int = 101
 
@@ -47,10 +47,13 @@ abstract class TurboContactsModule(reactContext: ReactApplicationContext) : Nati
 
         cursor.run {
             while (moveToNext()) {
+                val contactIdColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts._ID)
                 val nameColumnIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-                val phoneNumberColumnIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                val hasPhoneNumberColumnIndex = cursor.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER)
+
                 val contactName = if (nameColumnIndex >= 0) getString(nameColumnIndex) else ""
-                val phoneNumber = if (phoneNumberColumnIndex >= 0) getString(phoneNumberColumnIndex) else null
+                val hasPhoneNumber = if (hasPhoneNumberColumnIndex >= 0) getInt(hasPhoneNumberColumnIndex) else 0
+                val contactId = if (contactIdColumnIndex >= 0) getString(contactIdColumnIndex) else null
 
                 val nameParts = contactName.split(" ")
                 val firstName = nameParts.firstOrNull() ?: ""
@@ -60,7 +63,7 @@ abstract class TurboContactsModule(reactContext: ReactApplicationContext) : Nati
 
                 contactMap.putString("firstName", firstName)
                 contactMap.putString("lastName", lastName)
-                contactMap.putString("phoneNumber", phoneNumber)
+                contactMap.putString("phoneNumber", getPhoneNumber(hasPhoneNumber, contactId))
 
                 contactsArray.pushMap(contactMap)
             }
@@ -69,6 +72,35 @@ abstract class TurboContactsModule(reactContext: ReactApplicationContext) : Nati
         }
 
         return contactsArray
+    }
+
+    private fun getPhoneNumber(hasPhoneNumber: Int, contactId: String?): String? {
+        if (hasPhoneNumber == 0) {
+            return null
+        }
+
+        val contentResolver = reactApplicationContext.contentResolver
+        val phoneCursor = contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            null,
+            "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+            arrayOf(contactId),
+            null
+        ) ?: return null
+
+        var phoneNumber: String? = null
+
+        phoneCursor.use {
+            if (phoneCursor.moveToFirst()) {
+                val phoneNumberColumnIndex = phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+
+                phoneNumber =  if (phoneNumberColumnIndex >= 0) phoneCursor.getString(phoneNumberColumnIndex) else null
+            }
+        }
+
+        phoneCursor.close()
+
+        return phoneNumber
     }
 
     companion object {
